@@ -3,43 +3,44 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prompt Manager Pro</title>
+    <title>Lutra Prompt Organizer</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #121212; color: #e0e0e0; margin: 0; padding: 20px; }
-        .container { max-width: 900px; margin: auto; }
-        h2 { text-align: center; color: #00ffcc; }
-        .upload-section { background: #1e1e1e; padding: 20px; border-radius: 10px; text-align: center; border: 2px dashed #333; margin-bottom: 30px; }
-        input[type="file"] { margin-bottom: 15px; }
-        #promptList { display: flex; flex-direction: column; gap: 15px; }
-        .prompt-card { background: #252525; padding: 20px; border-radius: 8px; border-left: 5px solid #00ffcc; display: flex; flex-direction: column; position: relative; transition: 0.3s; }
-        .prompt-card:hover { transform: translateX(5px); background: #2a2a2a; }
-        .prompt-text { font-size: 14px; line-height: 1.6; margin-bottom: 15px; color: #bbb; }
-        .controls { display: flex; gap: 10px; }
-        button { cursor: pointer; border: none; padding: 8px 15px; border-radius: 5px; font-weight: bold; transition: 0.2s; }
-        .copy-btn { background: #00ffcc; color: #000; }
-        .copy-btn:hover { background: #00cca3; }
-        .delete-btn { background: #ff4d4d; color: #fff; }
-        .delete-btn:hover { background: #cc0000; }
-        .serial-number { font-weight: bold; color: #00ffcc; margin-bottom: 5px; }
+        body { font-family: 'Inter', sans-serif; background: #0f172a; color: #f8fafc; margin: 0; padding: 20px; }
+        .container { max-width: 1000px; margin: auto; }
+        .header { text-align: center; padding: 20px; border-bottom: 2px solid #334155; margin-bottom: 30px; }
+        .header h1 { color: #38bdf8; margin: 0; }
+        .upload-box { background: #1e293b; border: 2px dashed #38bdf8; border-radius: 12px; padding: 40px; text-align: center; margin-bottom: 30px; }
+        #promptContainer { display: grid; gap: 15px; }
+        .card { background: #1e293b; padding: 20px; border-radius: 10px; border: 1px solid #334155; position: relative; transition: 0.2s; }
+        .card:hover { border-color: #38bdf8; }
+        .serial { font-weight: bold; color: #38bdf8; font-size: 1.1em; margin-bottom: 8px; }
+        .text { font-size: 14px; line-height: 1.5; color: #cbd5e1; }
+        .btn-group { margin-top: 15px; display: flex; gap: 10px; }
+        button { border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+        .copy-btn { background: #38bdf8; color: #0f172a; }
+        .copy-btn:hover { background: #7dd3fc; }
+        .del-btn { background: #ef4444; color: white; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Prompt Manager (1111 Serializer)</h2>
-    
-    <div class="upload-section">
-        <p>Upload your Prompt Text File (.txt)</p>
-        <input type="file" id="fileInput" accept=".txt">
-        <p style="font-size: 12px; color: #888;">Note: Each prompt should be on a new line in your file.</p>
+    <div class="header">
+        <h1>NFT Prompt Organizer (1111 Serial)</h1>
+        <p>আপনার টেক্সট ফাইলটি আপলোড করলে এটি অটোমেটিক আলাদা হয়ে যাবে।</p>
     </div>
 
-    <div id="promptList"></div>
+    <div class="upload-box">
+        <input type="file" id="fileInput" accept=".txt">
+        <p style="margin-top: 10px; color: #94a3b8;">Select your lutra_1111_prompts.txt file</p>
+    </div>
+
+    <div id="promptContainer"></div>
 </div>
 
 <script>
     const fileInput = document.getElementById('fileInput');
-    const promptList = document.getElementById('promptList');
+    const promptContainer = document.getElementById('promptContainer');
 
     fileInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
@@ -47,40 +48,43 @@
 
         const reader = new FileReader();
         reader.onload = function(e) {
-            const content = e.target.result;
-            // Splitting by new line or common delimiters
-            const lines = content.split(/\r?\n/).filter(line => line.trim() !== "");
-            renderPrompts(lines);
+            let content = e.target.result;
+
+            // আপনার প্রম্পটগুলো "Hand-drawn mobile art" দিয়ে শুরু হচ্ছে। 
+            // এটি ব্যবহার করে আমরা প্রম্পটগুলো আলাদা করছি।
+            const prompts = content.split(/(?=Hand-drawn mobile art)/g).filter(p => p.trim().length > 10);
+            
+            displayPrompts(prompts);
         };
         reader.readAsText(file);
     });
 
-    function renderPrompts(prompts) {
-        promptList.innerHTML = "";
-        prompts.forEach((text, index) => {
+    function displayPrompts(prompts) {
+        promptContainer.innerHTML = "";
+        prompts.forEach((p, index) => {
             const card = document.createElement('div');
-            card.className = 'prompt-card';
+            card.className = 'card';
             card.innerHTML = `
-                <div class="serial-number">Prompt #${index + 1}</div>
-                <div class="prompt-text">${text}</div>
-                <div class="controls">
-                    <button class="copy-btn" onclick="copyPrompt(this, \`${text.replace(/`/g, '\\`')}\`)">Copy</button>
-                    <button class="delete-btn" onclick="this.parentElement.parentElement.remove()">Delete</button>
+                <div class="serial">Prompt #${index + 1}</div>
+                <div class="text">${p.trim()}</div>
+                <div class="btn-group">
+                    <button class="copy-btn" onclick="copyText(this, \`${p.trim().replace(/`/g, '\\`').replace(/\n/g, ' ')}\`)">Copy Prompt</button>
+                    <button class="del-btn" onclick="this.closest('.card').remove()">Delete</button>
                 </div>
             `;
-            promptList.appendChild(card);
+            promptContainer.appendChild(card);
         });
     }
 
-    function copyPrompt(btn, text) {
+    function copyText(btn, text) {
         navigator.clipboard.writeText(text).then(() => {
-            const originalText = btn.innerText;
-            btn.innerText = "Copied!";
-            btn.style.background = "#fff";
+            const oldText = btn.innerText;
+            btn.innerText = "✓ Copied!";
+            btn.style.background = "#22c55e";
             setTimeout(() => {
-                btn.innerText = originalText;
-                btn.style.background = "#00ffcc";
-            }, 1500);
+                btn.innerText = oldText;
+                btn.style.background = "#38bdf8";
+            }, 1000);
         });
     }
 </script>
