@@ -3,106 +3,124 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Text Prompt Manager - 1111 Prompts</title>
+    <title>Prompt Manager - 1111 Prompts</title>
     <style>
         :root {
-            --primary: #6366f1;
-            --danger: #ef4444;
-            --success: #22c55e;
-            --bg: #f1f5f9;
+            --primary: #4338ca;
+            --danger: #dc2626;
+            --success: #16a34a;
+            --bg: #f8fafc;
         }
-        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: var(--bg); margin: 0; padding: 20px; }
-        .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        .upload-area { border: 3px dashed #cbd5e1; padding: 30px; text-align: center; border-radius: 10px; background: #fff; margin-bottom: 25px; }
+        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg); margin: 0; padding: 20px; color: #1e293b; }
+        .container { max-width: 800px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
+        .upload-section { border: 2px dashed #94a3b8; padding: 40px; text-align: center; border-radius: 10px; margin-bottom: 20px; background: #fff; cursor: pointer; }
+        .upload-section:hover { border-color: var(--primary); }
         .prompt-card { 
-            background: #fff; border: 1px solid #e2e8f0; padding: 20px; border-radius: 8px; margin-bottom: 15px;
-            display: flex; flex-direction: column; gap: 10px; position: relative;
+            background: #fff; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; margin-bottom: 12px;
+            display: flex; flex-direction: column; gap: 10px; transition: 0.2s;
         }
-        .prompt-text { font-size: 14px; color: #334155; line-height: 1.6; background: #f8fafc; padding: 15px; border-radius: 5px; white-space: pre-wrap; border-left: 4px solid var(--primary); }
-        .btn-group { display: flex; gap: 10px; margin-top: 5px; }
-        button { flex: 1; padding: 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; color: white; transition: 0.2s; }
+        .prompt-card:hover { border-color: var(--primary); }
+        .prompt-text { font-size: 14px; line-height: 1.6; background: #f1f5f9; padding: 12px; border-radius: 6px; white-space: pre-wrap; word-wrap: break-word; }
+        .btn-group { display: flex; gap: 8px; }
+        button { 
+            flex: 1; padding: 10px; border: none; border-radius: 5px; cursor: pointer; 
+            font-weight: 600; font-size: 14px; color: white; transition: 0.2s; 
+        }
         .copy-btn { background-color: var(--primary); }
         .delete-btn { background-color: var(--danger); }
-        button:hover { opacity: 0.9; transform: translateY(-1px); }
-        .info { margin-bottom: 15px; font-weight: bold; color: #475569; }
+        button:active { transform: scale(0.98); }
+        #status { font-weight: bold; margin-bottom: 15px; color: #475569; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2 style="text-align: center;">Alien NFT Text Prompt Manager</h2>
+    <h2 style="text-align: center;">Alien NFT Prompt Manager</h2>
     
-    <div class="upload-area">
-        <p>আপনার <b>.txt</b> ফাইলটি এখানে আপলোড করুন</p>
-        <input type="file" id="textFile" accept=".txt">
+    <div class="upload-section" onclick="document.getElementById('fileInput').click()">
+        <p id="upload-msg">আপনার টেক্সট ফাইলটি এখানে ক্লিক করে আপলোড করুন</p>
+        <input type="file" id="fileInput" accept=".txt" style="display: none;">
     </div>
 
-    <div id="info" class="info"></div>
-    <div id="displayArea"></div>
+    <div id="status"></div>
+    <div id="promptContainer"></div>
 </div>
 
 <script>
-    const fileInput = document.getElementById('textFile');
-    const displayArea = document.getElementById('displayArea');
-    const infoDiv = document.getElementById('info');
+    const fileInput = document.getElementById('fileInput');
+    const promptContainer = document.getElementById('promptContainer');
+    const statusDiv = document.getElementById('status');
+    const uploadMsg = document.getElementById('upload-msg');
 
     fileInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
 
+        uploadMsg.innerText = "ফাইল লোড হচ্ছে: " + file.name;
         const reader = new FileReader();
+        
         reader.onload = function(event) {
-            const content = event.target.result;
+            const rawContent = event.target.result;
             
-            // টেক্সট ফাইলকে নম্বর অনুযায়ী ভাগ করার লজিক (১. ২. ৩. ইত্যাদি দেখে ভাগ করবে)
-            const promptArray = content.split(/(?=\d+\.\s+)/).filter(item => item.trim().length > 0);
-            renderPrompts(promptArray);
+            // ১. ২. ৩. এইভাবে প্রম্পটগুলোকে আলাদা করার জন্য রেগুলার এক্সপ্রেশন
+            const prompts = rawContent.split(/\n(?=\d+\.)/).filter(p => p.trim() !== "");
+            
+            renderList(prompts);
         };
         reader.readAsText(file);
     });
 
-    function renderPrompts(prompts) {
-        displayArea.innerHTML = '';
-        infoDiv.innerText = `মোট ${prompts.length} টি প্রম্পট পাওয়া গেছে।`;
+    function renderList(prompts) {
+        promptContainer.innerHTML = '';
+        statusDiv.innerText = `মোট ${prompts.length} টি প্রম্পট সিরিয়াল অনুযায়ী তৈরি হয়েছে।`;
 
         prompts.forEach((text, index) => {
-            const id = index + 1;
+            const displayIndex = index + 1;
             const card = document.createElement('div');
             card.className = 'prompt-card';
-            card.id = `card-${id}`;
+            card.id = `card-${displayIndex}`;
 
             card.innerHTML = `
-                <div class="prompt-text" id="text-${id}">${text.trim()}</div>
+                <div class="prompt-text" id="text-${displayIndex}">${text.trim()}</div>
                 <div class="btn-group">
-                    <button class="copy-btn" onclick="copyToClipboard(${id})">Copy (কপি)</button>
-                    <button class="delete-btn" onclick="deleteItem(${id})">Delete (ডিলিট)</button>
+                    <button class="copy-btn" onclick="copyToClipboard(${displayIndex})">Copy (কপি করুন)</button>
+                    <button class="delete-btn" onclick="removeItem(${displayIndex})">Delete (ডিলিট)</button>
                 </div>
             `;
-            displayArea.appendChild(card);
+            promptContainer.appendChild(card);
         });
     }
 
     function copyToClipboard(id) {
         const textToCopy = document.getElementById(`text-${id}`).innerText;
         
-        navigator.clipboard.writeText(textToCopy).then(() => {
-            const btn = document.querySelector(`#card-${id} .copy-btn`);
-            const originalText = btn.innerText;
-            btn.innerText = "✅ Copied!";
-            btn.style.backgroundColor = var(--success);
-            
-            setTimeout(() => {
-                btn.innerText = originalText;
-                btn.style.backgroundColor = "var(--primary)";
-            }, 1000);
-        }).catch(err => {
-            alert("কপি করা সম্ভব হয়নি।");
-        });
+        // সব ব্রাউজারে কাজ করার জন্য উন্নত কপি মেথড
+        const tempInput = document.createElement("textarea");
+        tempInput.value = textToCopy;
+        document.body.appendChild(tempInput);
+        tempInput.select();
+        document.execCommand("copy");
+        document.body.removeChild(tempInput);
+
+        // বাটন আপডেট
+        const btn = document.querySelector(`#card-${id} .copy-btn`);
+        const originalText = btn.innerText;
+        btn.innerText = "✅ Copied!";
+        btn.style.backgroundColor = "#16a34a";
+        
+        setTimeout(() => {
+            btn.innerText = originalText;
+            btn.style.backgroundColor = "#4338ca";
+        }, 1200);
     }
 
-    function deleteItem(id) {
+    function removeItem(id) {
         const card = document.getElementById(`card-${id}`);
-        card.style.display = 'none';
+        card.style.opacity = '0.3';
+        card.style.pointerEvents = 'none';
+        setTimeout(() => {
+            card.style.display = 'none';
+        }, 300);
     }
 </script>
 
