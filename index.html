@@ -3,100 +3,123 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dynamic Prompt Manager</title>
+    <title>JSON Prompt Manager</title>
     <style>
-        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f0f2f5; padding: 20px; }
-        .container { max-width: 900px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
-        h2 { text-align: center; color: #1a73e8; }
-        .input-section { margin-bottom: 30px; border-bottom: 2px solid #eee; padding-bottom: 20px; }
-        textarea { width: 100%; height: 200px; padding: 15px; border: 2px solid #ddd; border-radius: 8px; font-size: 14px; resize: vertical; box-sizing: border-box; }
-        .process-btn { background-color: #1a73e8; color: white; padding: 12px 25px; border: none; border-radius: 6px; cursor: pointer; width: 100%; font-size: 16px; margin-top: 10px; font-weight: bold; }
-        .prompt-item { display: flex; flex-direction: column; background: #fafafa; margin-bottom: 15px; padding: 15px; border-radius: 8px; border-left: 5px solid #1a73e8; }
-        .prompt-text { font-size: 14px; color: #333; margin-bottom: 12px; white-space: pre-wrap; line-height: 1.5; }
-        .actions { display: flex; gap: 10px; }
-        button { padding: 8px 18px; border: none; border-radius: 5px; cursor: pointer; font-weight: 600; transition: 0.2s; }
-        .copy-btn { background-color: #34a853; color: white; }
-        .delete-btn { background-color: #ea4335; color: white; }
-        button:active { transform: scale(0.95); }
+        :root {
+            --primary: #6366f1;
+            --danger: #ef4444;
+            --success: #22c55e;
+            --bg: #f8fafc;
+        }
+        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
+        .upload-section { text-align: center; border: 2px dashed #cbd5e1; padding: 40px; border-radius: 12px; margin-bottom: 30px; background: #fff; }
+        input[type="file"] { margin-top: 15px; }
+        .prompt-card { 
+            background: #ffffff; border: 1px solid #e2e8f0; padding: 20px; border-radius: 10px; margin-bottom: 15px;
+            display: flex; flex-direction: column; gap: 12px; transition: 0.2s;
+        }
+        .prompt-card:hover { border-color: var(--primary); box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1); }
+        .prompt-header { font-weight: bold; color: var(--primary); font-size: 1.1em; }
+        .prompt-text { font-size: 14px; color: #475569; background: #f1f5f9; padding: 12px; border-radius: 6px; line-height: 1.5; white-space: pre-wrap; }
+        .btn-group { display: flex; gap: 12px; }
+        button { 
+            padding: 10px 18px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; 
+            font-size: 14px; color: white; transition: 0.2s; flex: 1;
+        }
+        .copy-btn { background-color: var(--primary); }
+        .delete-btn { background-color: var(--danger); }
+        button:active { transform: scale(0.96); }
+        .counter { margin-bottom: 20px; font-weight: bold; color: #64748b; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>প্রম্পট ম্যানেজার</h2>
+    <h1 style="text-align: center;">Alien NFT Prompt Manager</h1>
     
-    <div class="input-section">
-        <p><strong>১. নিচে আপনার সকল প্রম্পট (১-১১১১) পেস্ট করুন:</strong></p>
-        <textarea id="rawInput" placeholder="এখানে আপনার ফাইল থেকে সব টেক্সট কপি করে পেস্ট করুন..."></textarea>
-        <button class="process-btn" onclick="processText()">লিস্ট তৈরি করুন</button>
+    <div class="upload-section">
+        <h3>আপনার JSON ফাইলটি এখানে আপলোড করুন</h3>
+        <input type="file" id="jsonUpload" accept=".json">
     </div>
 
+    <div id="status" class="counter"></div>
     <div id="promptList"></div>
 </div>
 
 <script>
-    function processText() {
-        const input = document.getElementById('rawInput').value;
-        const listContainer = document.getElementById('promptList');
-        listContainer.innerHTML = ''; // আগের লিস্ট ক্লিয়ার করা
+    const fileInput = document.getElementById('jsonUpload');
+    const promptList = document.getElementById('promptList');
+    const statusDiv = document.getElementById('status');
 
-        if (!input.trim()) {
-            alert("অনুগ্রহ করে টেক্সট পেস্ট করুন!");
-            return;
-        }
+    fileInput.addEventListener('change', function(e) {
+        const file = e.target.files[0];
+        if (!file) return;
 
-        // প্রম্পটগুলোকে সিরিয়াল নম্বর অনুযায়ী ভাগ করা (যেমন: 1., 2. ইত্যাদি)
-        const items = input.split(/(?=\d+\.\s+)/);
-
-        items.forEach((item, index) => {
-            if (item.trim()) {
-                const cleanItem = item.trim();
-                const div = document.createElement('div');
-                div.className = 'prompt-item';
-                div.id = `item-${index}`;
-                
-                div.innerHTML = `
-                    <div class="prompt-text" id="text-${index}">${cleanItem}</div>
-                    <div class="actions">
-                        <button class="copy-btn" onclick="copyText(${index})">কপি করুন</button>
-                        <button class="delete-btn" onclick="deleteItem(${index})">ডিলিট</button>
-                    </div>
-                `;
-                listContainer.appendChild(div);
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = JSON.parse(e.target.result);
+                // JSON যদি অবজেক্ট হয় তবে ভ্যালুগুলো নিবে, অ্যারে হলে সরাসরি নিবে
+                const prompts = Array.isArray(data) ? data : Object.values(data);
+                renderPrompts(prompts);
+            } catch (err) {
+                alert("ভুল ফাইল! দয়া করে একটি সঠিক JSON ফাইল আপলোড করুন।");
             }
+        };
+        reader.readAsText(file);
+    });
+
+    function renderPrompts(prompts) {
+        promptList.innerHTML = '';
+        statusDiv.innerText = `মোট প্রম্পট পাওয়া গেছে: ${prompts.length} টি`;
+
+        prompts.forEach((text, index) => {
+            const cardNumber = index + 1;
+            const card = document.createElement('div');
+            card.className = 'prompt-card';
+            card.id = `card-${cardNumber}`;
+
+            card.innerHTML = `
+                <div class="prompt-header">প্রম্পট নম্বর: ${cardNumber}</div>
+                <div class="prompt-text" id="text-${cardNumber}">${text}</div>
+                <div class="btn-group">
+                    <button class="copy-btn" onclick="copyPrompt(${cardNumber})">Copy (কপি করুন)</button>
+                    <button class="delete-btn" onclick="deletePrompt(${cardNumber})">Delete (ডিলিট)</button>
+                </div>
+            `;
+            promptList.appendChild(card);
         });
-        alert("মোট " + items.length + " টি প্রম্পট লোড হয়েছে।");
     }
 
-    function copyText(id) {
-        const text = document.getElementById(`text-${id}`).innerText;
+    function copyPrompt(id) {
+        const textToCopy = document.getElementById(`text-${id}`).innerText;
         
         // আধুনিক কপি মেথড
-        const textArea = document.createElement("textarea");
-        textArea.value = text;
-        document.body.appendChild(textArea);
-        textArea.select();
-        try {
-            document.execCommand('copy');
-            const btn = document.querySelector(`#item-${id} .copy-btn`);
-            btn.innerText = "Copied!";
-            btn.style.backgroundColor = "#2b8a3e";
+        navigator.clipboard.writeText(textToCopy).then(() => {
+            const btn = document.querySelector(`#card-${id} .copy-btn`);
+            const originalText = btn.innerText;
+            btn.innerText = "✅ Copied!";
+            btn.style.backgroundColor = "var(--success)";
+            
             setTimeout(() => {
-                btn.innerText = "কপি করুন";
-                btn.style.backgroundColor = "#34a853";
+                btn.innerText = originalText;
+                btn.style.backgroundColor = "var(--primary)";
             }, 1500);
-        } catch (err) {
-            alert('কপি করা সম্ভব হচ্ছে না');
-        }
-        document.body.removeChild(textArea);
+        }).catch(err => {
+            console.error('Copy failed', err);
+            alert("কপি করা যায়নি।");
+        });
     }
 
-    function deleteItem(id) {
-        const element = document.getElementById(`item-${id}`);
-        element.style.opacity = '0.3';
-        setTimeout(() => {
-            element.remove();
-        }, 200);
+    function deletePrompt(id) {
+        const card = document.getElementById(`card-${id}`);
+        if(confirm("আপনি কি এই প্রম্পটটি ডিলিট করতে চান?")) {
+            card.style.opacity = '0';
+            setTimeout(() => {
+                card.remove();
+            }, 300);
+        }
     }
 </script>
 
