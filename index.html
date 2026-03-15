@@ -3,96 +3,43 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI Prompt Manager</title>
+    <title>Prompt Manager Pro</title>
     <style>
-        :root {
-            --bg: #0f172a;
-            --card: #1e293b;
-            --text: #f8fafc;
-            --accent: #38bdf8;
-            --danger: #ef4444;
-        }
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg);
-            color: var(--text);
-            margin: 0;
-            padding: 20px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-        .container {
-            width: 100%;
-            max-width: 800px;
-        }
-        h1 { color: var(--accent); text-align: center; }
-        .upload-section {
-            background: var(--card);
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            text-align: center;
-            border: 2px dashed var(--accent);
-        }
-        input[type="file"] { margin: 10px 0; }
-        .prompt-list { margin-top: 20px; }
-        .prompt-item {
-            background: var(--card);
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 12px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-left: 5px solid var(--accent);
-            animation: fadeIn 0.3s ease;
-        }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } }
-        .prompt-text {
-            flex-grow: 1;
-            margin-right: 15px;
-            font-size: 14px;
-            line-height: 1.4;
-        }
-        .serial-num {
-            font-weight: bold;
-            color: var(--accent);
-            margin-right: 10px;
-            min-width: 40px;
-        }
-        .actions { display: flex; gap: 8px; }
-        button {
-            padding: 8px 12px;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: bold;
-            transition: 0.2s;
-        }
-        .copy-btn { background-color: var(--accent); color: #000; }
-        .delete-btn { background-color: var(--danger); color: white; }
-        button:hover { opacity: 0.8; transform: scale(1.05); }
-        button:active { transform: scale(0.95); }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background: #121212; color: #e0e0e0; margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: auto; }
+        h2 { text-align: center; color: #00ffcc; }
+        .upload-section { background: #1e1e1e; padding: 20px; border-radius: 10px; text-align: center; border: 2px dashed #333; margin-bottom: 30px; }
+        input[type="file"] { margin-bottom: 15px; }
+        #promptList { display: flex; flex-direction: column; gap: 15px; }
+        .prompt-card { background: #252525; padding: 20px; border-radius: 8px; border-left: 5px solid #00ffcc; display: flex; flex-direction: column; position: relative; transition: 0.3s; }
+        .prompt-card:hover { transform: translateX(5px); background: #2a2a2a; }
+        .prompt-text { font-size: 14px; line-height: 1.6; margin-bottom: 15px; color: #bbb; }
+        .controls { display: flex; gap: 10px; }
+        button { cursor: pointer; border: none; padding: 8px 15px; border-radius: 5px; font-weight: bold; transition: 0.2s; }
+        .copy-btn { background: #00ffcc; color: #000; }
+        .copy-btn:hover { background: #00cca3; }
+        .delete-btn { background: #ff4d4d; color: #fff; }
+        .delete-btn:hover { background: #cc0000; }
+        .serial-number { font-weight: bold; color: #00ffcc; margin-bottom: 5px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Prompt Serializer</h1>
+    <h2>Prompt Manager (1111 Serializer)</h2>
     
     <div class="upload-section">
-        <p>আপনার প্রম্পট টেক্সট ফাইলটি (.txt) এখানে আপলোড করুন</p>
+        <p>Upload your Prompt Text File (.txt)</p>
         <input type="file" id="fileInput" accept=".txt">
+        <p style="font-size: 12px; color: #888;">Note: Each prompt should be on a new line in your file.</p>
     </div>
 
-    <div id="promptContainer" class="prompt-list">
-        </div>
+    <div id="promptList"></div>
 </div>
 
 <script>
     const fileInput = document.getElementById('fileInput');
-    const promptContainer = document.getElementById('promptContainer');
+    const promptList = document.getElementById('promptList');
 
     fileInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
@@ -101,27 +48,27 @@
         const reader = new FileReader();
         reader.onload = function(e) {
             const content = e.target.result;
-            // প্রতিটি লাইনকে আলাদা প্রম্পট হিসেবে ধরা হবে
-            const prompts = content.split('\n').filter(p => p.trim() !== "");
-            displayPrompts(prompts);
+            // Splitting by new line or common delimiters
+            const lines = content.split(/\r?\n/).filter(line => line.trim() !== "");
+            renderPrompts(lines);
         };
         reader.readAsText(file);
     });
 
-    function displayPrompts(prompts) {
-        promptContainer.innerHTML = "";
+    function renderPrompts(prompts) {
+        promptList.innerHTML = "";
         prompts.forEach((text, index) => {
-            const div = document.createElement('div');
-            div.className = 'prompt-item';
-            div.innerHTML = `
-                <span class="serial-num">#${index + 1}</span>
+            const card = document.createElement('div');
+            card.className = 'prompt-card';
+            card.innerHTML = `
+                <div class="serial-number">Prompt #${index + 1}</div>
                 <div class="prompt-text">${text}</div>
-                <div class="actions">
+                <div class="controls">
                     <button class="copy-btn" onclick="copyPrompt(this, \`${text.replace(/`/g, '\\`')}\`)">Copy</button>
                     <button class="delete-btn" onclick="this.parentElement.parentElement.remove()">Delete</button>
                 </div>
             `;
-            promptContainer.appendChild(div);
+            promptList.appendChild(card);
         });
     }
 
@@ -129,36 +76,12 @@
         navigator.clipboard.writeText(text).then(() => {
             const originalText = btn.innerText;
             btn.innerText = "Copied!";
-            btn.style.backgroundColor = "#4ade80";
+            btn.style.background = "#fff";
             setTimeout(() => {
                 btn.innerText = originalText;
-                btn.style.backgroundColor = "";
+                btn.style.background = "#00ffcc";
             }, 1500);
         });
-    }
-</script>
-
-</body>
-</html>
-        // বাটন আপডেট
-        const btn = document.querySelector(`#card-${id} .copy-btn`);
-        const originalText = btn.innerText;
-        btn.innerText = "✅ Copied!";
-        btn.style.backgroundColor = "#16a34a";
-        
-        setTimeout(() => {
-            btn.innerText = originalText;
-            btn.style.backgroundColor = "#4338ca";
-        }, 1200);
-    }
-
-    function removeItem(id) {
-        const card = document.getElementById(`card-${id}`);
-        card.style.opacity = '0.3';
-        card.style.pointerEvents = 'none';
-        setTimeout(() => {
-            card.style.display = 'none';
-        }, 300);
     }
 </script>
 
