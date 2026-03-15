@@ -3,114 +3,101 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Alien NFT Prompts Manager - 1111 Prompts</title>
+    <title>Dynamic Prompt Manager</title>
     <style>
-        :root {
-            --primary-color: #4f46e5;
-            --danger-color: #ef4444;
-            --success-color: #22c55e;
-        }
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8fafc; margin: 0; padding: 20px; }
-        .container { max-width: 900px; margin: auto; background: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); }
-        h1 { text-align: center; color: #1e293b; margin-bottom: 30px; }
-        .prompt-card { 
-            display: flex; flex-direction: column; padding: 20px; margin-bottom: 15px; 
-            border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; transition: transform 0.2s;
-        }
-        .prompt-card:hover { transform: translateY(-2px); border-color: var(--primary-color); }
-        .prompt-header { font-weight: bold; color: var(--primary-color); margin-bottom: 10px; font-size: 1.1em; }
-        .prompt-content { font-size: 14px; color: #475569; line-height: 1.6; background: #f1f5f9; padding: 10px; border-radius: 6px; margin-bottom: 15px; }
-        .button-group { display: flex; gap: 10px; }
-        button { 
-            padding: 10px 20px; border: none; border-radius: 6px; cursor: pointer; 
-            font-weight: 600; font-size: 14px; transition: 0.3s;
-        }
-        .copy-btn { background-color: var(--primary-color); color: white; }
-        .delete-btn { background-color: var(--danger-color); color: white; }
-        button:hover { opacity: 0.9; }
-        .status-msg { font-size: 12px; margin-top: 5px; display: none; color: var(--success-color); }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: #f0f2f5; padding: 20px; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        h2 { text-align: center; color: #1a73e8; }
+        .input-section { margin-bottom: 30px; border-bottom: 2px solid #eee; padding-bottom: 20px; }
+        textarea { width: 100%; height: 200px; padding: 15px; border: 2px solid #ddd; border-radius: 8px; font-size: 14px; resize: vertical; box-sizing: border-box; }
+        .process-btn { background-color: #1a73e8; color: white; padding: 12px 25px; border: none; border-radius: 6px; cursor: pointer; width: 100%; font-size: 16px; margin-top: 10px; font-weight: bold; }
+        .prompt-item { display: flex; flex-direction: column; background: #fafafa; margin-bottom: 15px; padding: 15px; border-radius: 8px; border-left: 5px solid #1a73e8; }
+        .prompt-text { font-size: 14px; color: #333; margin-bottom: 12px; white-space: pre-wrap; line-height: 1.5; }
+        .actions { display: flex; gap: 10px; }
+        button { padding: 8px 18px; border: none; border-radius: 5px; cursor: pointer; font-weight: 600; transition: 0.2s; }
+        .copy-btn { background-color: #34a853; color: white; }
+        .delete-btn { background-color: #ea4335; color: white; }
+        button:active { transform: scale(0.95); }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>Alien NFT 1111 Prompts Manager</h1>
-    <div id="main-list"></div>
+    <h2>প্রম্পট ম্যানেজার</h2>
+    
+    <div class="input-section">
+        <p><strong>১. নিচে আপনার সকল প্রম্পট (১-১১১১) পেস্ট করুন:</strong></p>
+        <textarea id="rawInput" placeholder="এখানে আপনার ফাইল থেকে সব টেক্সট কপি করে পেস্ট করুন..."></textarea>
+        <button class="process-btn" onclick="processText()">লিস্ট তৈরি করুন</button>
+    </div>
+
+    <div id="promptList"></div>
 </div>
 
 <script>
-    // আপনার ফাইল থেকে প্রম্পটগুলো সিরিয়াল অনুযায়ী রেন্ডার করার ফাংশন
-    // ১ থেকে ১১১১ পর্যন্ত লুপ চালিয়ে ডাটা জেনারেট করা হবে
-    const totalPrompts = 1111;
-    
-    // নমুনা ডাটা স্ট্রাকচার (আপনার ফাইলের টেক্সটগুলো এখানে সিরিয়াল অনুযায়ী আসবে)
-    const promptBaseText = "Hand‑drawn mobile doodle NFT illustration, black outline only (no white outline), 600x600 background, looks like drawn by hand on a phone, slightly imperfect lines, bright attractive colors, half‑body character, unique alien character, same pose for the whole collection: alien standing straight, body facing forward but head turned slightly to the right looking in one direction, centered composition.";
+    function processText() {
+        const input = document.getElementById('rawInput').value;
+        const listContainer = document.getElementById('promptList');
+        listContainer.innerHTML = ''; // আগের লিস্ট ক্লিয়ার করা
 
-    function createList() {
-        const listContainer = document.getElementById('main-list');
+        if (!input.trim()) {
+            alert("অনুগ্রহ করে টেক্সট পেস্ট করুন!");
+            return;
+        }
+
+        // প্রম্পটগুলোকে সিরিয়াল নম্বর অনুযায়ী ভাগ করা (যেমন: 1., 2. ইত্যাদি)
+        const items = input.split(/(?=\d+\.\s+)/);
+
+        items.forEach((item, index) => {
+            if (item.trim()) {
+                const cleanItem = item.trim();
+                const div = document.createElement('div');
+                div.className = 'prompt-item';
+                div.id = `item-${index}`;
+                
+                div.innerHTML = `
+                    <div class="prompt-text" id="text-${index}">${cleanItem}</div>
+                    <div class="actions">
+                        <button class="copy-btn" onclick="copyText(${index})">কপি করুন</button>
+                        <button class="delete-btn" onclick="deleteItem(${index})">ডিলিট</button>
+                    </div>
+                `;
+                listContainer.appendChild(div);
+            }
+        });
+        alert("মোট " + items.length + " টি প্রম্পট লোড হয়েছে।");
+    }
+
+    function copyText(id) {
+        const text = document.getElementById(`text-${id}`).innerText;
         
-        for (let i = 1; i <= totalPrompts; i++) {
-            const card = document.createElement('div');
-            card.className = 'prompt-card';
-            card.id = `card-${i}`;
-            
-            // এখানে আপনার ফাইলের আসল ডাটা ম্যাপ করতে হবে
-            card.innerHTML = `
-                <div class="prompt-header">Prompt #${i}</div>
-                <div class="prompt-content" id="prompt-text-${i}">
-                    ${i}. ${promptBaseText} (Details for alien #${i} from your file...)
-                </div>
-                <div class="button-group">
-                    <button class="copy-btn" onclick="copyToClipboard(${i})">এক ক্লিকে কপি</button>
-                    <button class="delete-btn" onclick="removeItem(${i})">ডিলিট করুন</button>
-                </div>
-                <div id="status-${i}" class="status-msg">কপি সফল হয়েছে!</div>
-            `;
-            listContainer.appendChild(card);
-        }
-    }
-
-    // কপি করার মূল ফাংশন
-    async function copyToClipboard(id) {
-        const textElement = document.getElementById(`prompt-text-${id}`);
-        const textToCopy = textElement.innerText;
-
+        // আধুনিক কপি মেথড
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        document.body.appendChild(textArea);
+        textArea.select();
         try {
-            await navigator.clipboard.writeText(textToCopy);
-            
-            // সফল হলে ইউজারকে জানানো
-            const status = document.getElementById(`status-${id}`);
-            status.style.display = 'block';
-            setTimeout(() => { status.style.display = 'none'; }, 2000);
-            
-            // বাটন টেক্সট পরিবর্তন
-            const btn = document.querySelector(`#card-${id} .copy-btn`);
+            document.execCommand('copy');
+            const btn = document.querySelector(`#item-${id} .copy-btn`);
             btn.innerText = "Copied!";
-            btn.style.backgroundColor = "#22c55e";
-            setTimeout(() => { 
-                btn.innerText = "এক ক্লিকে কপি"; 
-                btn.style.backgroundColor = "#4f46e5";
-            }, 2000);
-
-        } catch (err) {
-            console.error('Copy failed:', err);
-            alert('কপি করা সম্ভব হচ্ছে না। দয়া করে ব্রাউজার পারমিশন চেক করুন।');
-        }
-    }
-
-    // ডিলিট করার ফাংশন
-    function removeItem(id) {
-        const element = document.getElementById(`card-${id}`);
-        if (confirm(`আপনি কি ${id} নম্বর প্রম্পটটি তালিকা থেকে সরাতে চান?`)) {
-            element.style.opacity = '0';
+            btn.style.backgroundColor = "#2b8a3e";
             setTimeout(() => {
-                element.remove();
-            }, 300);
+                btn.innerText = "কপি করুন";
+                btn.style.backgroundColor = "#34a853";
+            }, 1500);
+        } catch (err) {
+            alert('কপি করা সম্ভব হচ্ছে না');
         }
+        document.body.removeChild(textArea);
     }
 
-    // পেজ লোড হলে লিস্ট তৈরি হবে
-    window.onload = createList;
+    function deleteItem(id) {
+        const element = document.getElementById(`item-${id}`);
+        element.style.opacity = '0.3';
+        setTimeout(() => {
+            element.remove();
+        }, 200);
+    }
 </script>
 
 </body>
