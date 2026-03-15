@@ -1,107 +1,145 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prompt Manager - 1111 Prompts</title>
+    <title>AI Prompt Manager</title>
     <style>
         :root {
-            --primary: #4338ca;
-            --danger: #dc2626;
-            --success: #16a34a;
-            --bg: #f8fafc;
+            --bg: #0f172a;
+            --card: #1e293b;
+            --text: #f8fafc;
+            --accent: #38bdf8;
+            --danger: #ef4444;
         }
-        body { font-family: 'Segoe UI', Tahoma, sans-serif; background-color: var(--bg); margin: 0; padding: 20px; color: #1e293b; }
-        .container { max-width: 800px; margin: auto; background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); }
-        .upload-section { border: 2px dashed #94a3b8; padding: 40px; text-align: center; border-radius: 10px; margin-bottom: 20px; background: #fff; cursor: pointer; }
-        .upload-section:hover { border-color: var(--primary); }
-        .prompt-card { 
-            background: #fff; border: 1px solid #e2e8f0; padding: 15px; border-radius: 8px; margin-bottom: 12px;
-            display: flex; flex-direction: column; gap: 10px; transition: 0.2s;
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
-        .prompt-card:hover { border-color: var(--primary); }
-        .prompt-text { font-size: 14px; line-height: 1.6; background: #f1f5f9; padding: 12px; border-radius: 6px; white-space: pre-wrap; word-wrap: break-word; }
-        .btn-group { display: flex; gap: 8px; }
-        button { 
-            flex: 1; padding: 10px; border: none; border-radius: 5px; cursor: pointer; 
-            font-weight: 600; font-size: 14px; color: white; transition: 0.2s; 
+        .container {
+            width: 100%;
+            max-width: 800px;
         }
-        .copy-btn { background-color: var(--primary); }
-        .delete-btn { background-color: var(--danger); }
-        button:active { transform: scale(0.98); }
-        #status { font-weight: bold; margin-bottom: 15px; color: #475569; }
+        h1 { color: var(--accent); text-align: center; }
+        .upload-section {
+            background: var(--card);
+            padding: 20px;
+            border-radius: 12px;
+            margin-bottom: 20px;
+            text-align: center;
+            border: 2px dashed var(--accent);
+        }
+        input[type="file"] { margin: 10px 0; }
+        .prompt-list { margin-top: 20px; }
+        .prompt-item {
+            background: var(--card);
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 5px solid var(--accent);
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } }
+        .prompt-text {
+            flex-grow: 1;
+            margin-right: 15px;
+            font-size: 14px;
+            line-height: 1.4;
+        }
+        .serial-num {
+            font-weight: bold;
+            color: var(--accent);
+            margin-right: 10px;
+            min-width: 40px;
+        }
+        .actions { display: flex; gap: 8px; }
+        button {
+            padding: 8px 12px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+        .copy-btn { background-color: var(--accent); color: #000; }
+        .delete-btn { background-color: var(--danger); color: white; }
+        button:hover { opacity: 0.8; transform: scale(1.05); }
+        button:active { transform: scale(0.95); }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2 style="text-align: center;">Alien NFT Prompt Manager</h2>
+    <h1>Prompt Serializer</h1>
     
-    <div class="upload-section" onclick="document.getElementById('fileInput').click()">
-        <p id="upload-msg">আপনার টেক্সট ফাইলটি এখানে ক্লিক করে আপলোড করুন</p>
-        <input type="file" id="fileInput" accept=".txt" style="display: none;">
+    <div class="upload-section">
+        <p>আপনার প্রম্পট টেক্সট ফাইলটি (.txt) এখানে আপলোড করুন</p>
+        <input type="file" id="fileInput" accept=".txt">
     </div>
 
-    <div id="status"></div>
-    <div id="promptContainer"></div>
+    <div id="promptContainer" class="prompt-list">
+        </div>
 </div>
 
 <script>
     const fileInput = document.getElementById('fileInput');
     const promptContainer = document.getElementById('promptContainer');
-    const statusDiv = document.getElementById('status');
-    const uploadMsg = document.getElementById('upload-msg');
 
     fileInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
 
-        uploadMsg.innerText = "ফাইল লোড হচ্ছে: " + file.name;
         const reader = new FileReader();
-        
-        reader.onload = function(event) {
-            const rawContent = event.target.result;
-            
-            // ১. ২. ৩. এইভাবে প্রম্পটগুলোকে আলাদা করার জন্য রেগুলার এক্সপ্রেশন
-            const prompts = rawContent.split(/\n(?=\d+\.)/).filter(p => p.trim() !== "");
-            
-            renderList(prompts);
+        reader.onload = function(e) {
+            const content = e.target.result;
+            // প্রতিটি লাইনকে আলাদা প্রম্পট হিসেবে ধরা হবে
+            const prompts = content.split('\n').filter(p => p.trim() !== "");
+            displayPrompts(prompts);
         };
         reader.readAsText(file);
     });
 
-    function renderList(prompts) {
-        promptContainer.innerHTML = '';
-        statusDiv.innerText = `মোট ${prompts.length} টি প্রম্পট সিরিয়াল অনুযায়ী তৈরি হয়েছে।`;
-
+    function displayPrompts(prompts) {
+        promptContainer.innerHTML = "";
         prompts.forEach((text, index) => {
-            const displayIndex = index + 1;
-            const card = document.createElement('div');
-            card.className = 'prompt-card';
-            card.id = `card-${displayIndex}`;
-
-            card.innerHTML = `
-                <div class="prompt-text" id="text-${displayIndex}">${text.trim()}</div>
-                <div class="btn-group">
-                    <button class="copy-btn" onclick="copyToClipboard(${displayIndex})">Copy (কপি করুন)</button>
-                    <button class="delete-btn" onclick="removeItem(${displayIndex})">Delete (ডিলিট)</button>
+            const div = document.createElement('div');
+            div.className = 'prompt-item';
+            div.innerHTML = `
+                <span class="serial-num">#${index + 1}</span>
+                <div class="prompt-text">${text}</div>
+                <div class="actions">
+                    <button class="copy-btn" onclick="copyPrompt(this, \`${text.replace(/`/g, '\\`')}\`)">Copy</button>
+                    <button class="delete-btn" onclick="this.parentElement.parentElement.remove()">Delete</button>
                 </div>
             `;
-            promptContainer.appendChild(card);
+            promptContainer.appendChild(div);
         });
     }
 
-    function copyToClipboard(id) {
-        const textToCopy = document.getElementById(`text-${id}`).innerText;
-        
-        // সব ব্রাউজারে কাজ করার জন্য উন্নত কপি মেথড
-        const tempInput = document.createElement("textarea");
-        tempInput.value = textToCopy;
-        document.body.appendChild(tempInput);
-        tempInput.select();
-        document.execCommand("copy");
-        document.body.removeChild(tempInput);
+    function copyPrompt(btn, text) {
+        navigator.clipboard.writeText(text).then(() => {
+            const originalText = btn.innerText;
+            btn.innerText = "Copied!";
+            btn.style.backgroundColor = "#4ade80";
+            setTimeout(() => {
+                btn.innerText = originalText;
+                btn.style.backgroundColor = "";
+            }, 1500);
+        });
+    }
+</script>
 
+</body>
+</html>
         // বাটন আপডেট
         const btn = document.querySelector(`#card-${id} .copy-btn`);
         const originalText = btn.innerText;
