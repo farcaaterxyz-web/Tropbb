@@ -3,123 +3,106 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JSON Prompt Manager</title>
+    <title>Text Prompt Manager - 1111 Prompts</title>
     <style>
         :root {
             --primary: #6366f1;
             --danger: #ef4444;
             --success: #22c55e;
-            --bg: #f8fafc;
+            --bg: #f1f5f9;
         }
-        body { font-family: 'Segoe UI', sans-serif; background-color: var(--bg); margin: 0; padding: 20px; }
-        .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 25px rgba(0,0,0,0.05); }
-        .upload-section { text-align: center; border: 2px dashed #cbd5e1; padding: 40px; border-radius: 12px; margin-bottom: 30px; background: #fff; }
-        input[type="file"] { margin-top: 15px; }
+        body { font-family: 'Segoe UI', Arial, sans-serif; background-color: var(--bg); margin: 0; padding: 20px; }
+        .container { max-width: 900px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.1); }
+        .upload-area { border: 3px dashed #cbd5e1; padding: 30px; text-align: center; border-radius: 10px; background: #fff; margin-bottom: 25px; }
         .prompt-card { 
-            background: #ffffff; border: 1px solid #e2e8f0; padding: 20px; border-radius: 10px; margin-bottom: 15px;
-            display: flex; flex-direction: column; gap: 12px; transition: 0.2s;
+            background: #fff; border: 1px solid #e2e8f0; padding: 20px; border-radius: 8px; margin-bottom: 15px;
+            display: flex; flex-direction: column; gap: 10px; position: relative;
         }
-        .prompt-card:hover { border-color: var(--primary); box-shadow: 0 4px 12px rgba(99, 102, 241, 0.1); }
-        .prompt-header { font-weight: bold; color: var(--primary); font-size: 1.1em; }
-        .prompt-text { font-size: 14px; color: #475569; background: #f1f5f9; padding: 12px; border-radius: 6px; line-height: 1.5; white-space: pre-wrap; }
-        .btn-group { display: flex; gap: 12px; }
-        button { 
-            padding: 10px 18px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; 
-            font-size: 14px; color: white; transition: 0.2s; flex: 1;
-        }
+        .prompt-text { font-size: 14px; color: #334155; line-height: 1.6; background: #f8fafc; padding: 15px; border-radius: 5px; white-space: pre-wrap; border-left: 4px solid var(--primary); }
+        .btn-group { display: flex; gap: 10px; margin-top: 5px; }
+        button { flex: 1; padding: 12px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; color: white; transition: 0.2s; }
         .copy-btn { background-color: var(--primary); }
         .delete-btn { background-color: var(--danger); }
-        button:active { transform: scale(0.96); }
-        .counter { margin-bottom: 20px; font-weight: bold; color: #64748b; }
+        button:hover { opacity: 0.9; transform: translateY(-1px); }
+        .info { margin-bottom: 15px; font-weight: bold; color: #475569; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1 style="text-align: center;">Alien NFT Prompt Manager</h1>
+    <h2 style="text-align: center;">Alien NFT Text Prompt Manager</h2>
     
-    <div class="upload-section">
-        <h3>আপনার JSON ফাইলটি এখানে আপলোড করুন</h3>
-        <input type="file" id="jsonUpload" accept=".json">
+    <div class="upload-area">
+        <p>আপনার <b>.txt</b> ফাইলটি এখানে আপলোড করুন</p>
+        <input type="file" id="textFile" accept=".txt">
     </div>
 
-    <div id="status" class="counter"></div>
-    <div id="promptList"></div>
+    <div id="info" class="info"></div>
+    <div id="displayArea"></div>
 </div>
 
 <script>
-    const fileInput = document.getElementById('jsonUpload');
-    const promptList = document.getElementById('promptList');
-    const statusDiv = document.getElementById('status');
+    const fileInput = document.getElementById('textFile');
+    const displayArea = document.getElementById('displayArea');
+    const infoDiv = document.getElementById('info');
 
     fileInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
 
         const reader = new FileReader();
-        reader.onload = function(e) {
-            try {
-                const data = JSON.parse(e.target.result);
-                // JSON যদি অবজেক্ট হয় তবে ভ্যালুগুলো নিবে, অ্যারে হলে সরাসরি নিবে
-                const prompts = Array.isArray(data) ? data : Object.values(data);
-                renderPrompts(prompts);
-            } catch (err) {
-                alert("ভুল ফাইল! দয়া করে একটি সঠিক JSON ফাইল আপলোড করুন।");
-            }
+        reader.onload = function(event) {
+            const content = event.target.result;
+            
+            // টেক্সট ফাইলকে নম্বর অনুযায়ী ভাগ করার লজিক (১. ২. ৩. ইত্যাদি দেখে ভাগ করবে)
+            const promptArray = content.split(/(?=\d+\.\s+)/).filter(item => item.trim().length > 0);
+            renderPrompts(promptArray);
         };
         reader.readAsText(file);
     });
 
     function renderPrompts(prompts) {
-        promptList.innerHTML = '';
-        statusDiv.innerText = `মোট প্রম্পট পাওয়া গেছে: ${prompts.length} টি`;
+        displayArea.innerHTML = '';
+        infoDiv.innerText = `মোট ${prompts.length} টি প্রম্পট পাওয়া গেছে।`;
 
         prompts.forEach((text, index) => {
-            const cardNumber = index + 1;
+            const id = index + 1;
             const card = document.createElement('div');
             card.className = 'prompt-card';
-            card.id = `card-${cardNumber}`;
+            card.id = `card-${id}`;
 
             card.innerHTML = `
-                <div class="prompt-header">প্রম্পট নম্বর: ${cardNumber}</div>
-                <div class="prompt-text" id="text-${cardNumber}">${text}</div>
+                <div class="prompt-text" id="text-${id}">${text.trim()}</div>
                 <div class="btn-group">
-                    <button class="copy-btn" onclick="copyPrompt(${cardNumber})">Copy (কপি করুন)</button>
-                    <button class="delete-btn" onclick="deletePrompt(${cardNumber})">Delete (ডিলিট)</button>
+                    <button class="copy-btn" onclick="copyToClipboard(${id})">Copy (কপি)</button>
+                    <button class="delete-btn" onclick="deleteItem(${id})">Delete (ডিলিট)</button>
                 </div>
             `;
-            promptList.appendChild(card);
+            displayArea.appendChild(card);
         });
     }
 
-    function copyPrompt(id) {
+    function copyToClipboard(id) {
         const textToCopy = document.getElementById(`text-${id}`).innerText;
         
-        // আধুনিক কপি মেথড
         navigator.clipboard.writeText(textToCopy).then(() => {
             const btn = document.querySelector(`#card-${id} .copy-btn`);
             const originalText = btn.innerText;
             btn.innerText = "✅ Copied!";
-            btn.style.backgroundColor = "var(--success)";
+            btn.style.backgroundColor = var(--success);
             
             setTimeout(() => {
                 btn.innerText = originalText;
                 btn.style.backgroundColor = "var(--primary)";
-            }, 1500);
+            }, 1000);
         }).catch(err => {
-            console.error('Copy failed', err);
-            alert("কপি করা যায়নি।");
+            alert("কপি করা সম্ভব হয়নি।");
         });
     }
 
-    function deletePrompt(id) {
+    function deleteItem(id) {
         const card = document.getElementById(`card-${id}`);
-        if(confirm("আপনি কি এই প্রম্পটটি ডিলিট করতে চান?")) {
-            card.style.opacity = '0';
-            setTimeout(() => {
-                card.remove();
-            }, 300);
-        }
+        card.style.display = 'none';
     }
 </script>
 
