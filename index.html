@@ -10,6 +10,7 @@
             --danger: #e53935;
             --bg: #f0f4f4;
             --white: #ffffff;
+            --save: #1a73e8;
         }
 
         body {
@@ -23,8 +24,27 @@
 
         .container {
             width: 100%;
-            max-width: 600px; /* মোবাইলের জন্য অপ্টিমাইজড সাইজ */
+            max-width: 600px;
             margin-top: 10px;
+            position: relative;
+        }
+
+        /* Save বাটন পজিশনিং */
+        .save-wrapper {
+            position: absolute;
+            top: 0;
+            right: 0;
+        }
+
+        .save-btn-top {
+            background: var(--save);
+            color: white;
+            border: none;
+            padding: 8px 15px;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
         h2 {
@@ -34,7 +54,6 @@
             margin-bottom: 20px;
         }
 
-        /* আপলোড সেকশন */
         .upload-card {
             background: var(--white);
             padding: 20px;
@@ -60,7 +79,6 @@
             font-size: 14px;
         }
 
-        /* প্রম্পট কার্ড স্টাইল */
         .prompt-card {
             background: var(--white);
             margin-bottom: 15px;
@@ -98,7 +116,6 @@
             white-space: pre-wrap;
         }
 
-        /* বাটন স্টাইল - মোবাইলের জন্য বড় এবং ক্লিকযোগ্য */
         .actions {
             display: flex;
             gap: 10px;
@@ -124,17 +141,21 @@
 
         .btn:active { transform: scale(0.95); }
 
-        /* মোবাইল স্ক্রিনের জন্য বিশেষ টিউনিং */
         @media (max-width: 480px) {
             body { padding: 5px; }
             .prompt-card { padding: 12px; }
             h2 { font-size: 1.2rem; }
+            .save-btn-top { padding: 6px 10px; font-size: 12px; }
         }
     </style>
 </head>
 <body>
 
 <div class="container">
+    <div class="save-wrapper">
+        <button id="save-json" class="save-btn-top">💾 Save</button>
+    </div>
+    
     <h2>NFT Prompt Manager</h2>
 
     <div class="upload-card" onclick="document.getElementById('file-input').click()">
@@ -148,8 +169,7 @@
         <span id="file-name-text"></span>
     </div>
 
-    <div id="display-area">
-        </div>
+    <div id="display-area"></div>
 </div>
 
 <script>
@@ -158,6 +178,9 @@
     const statusBar = document.getElementById('status-bar');
     const countText = document.getElementById('count-text');
     const fileNameText = document.getElementById('file-name-text');
+    const saveBtn = document.getElementById('save-json');
+
+    let currentData = [];
 
     fileInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
@@ -170,8 +193,8 @@
         reader.onload = function(event) {
             try {
                 const json = JSON.parse(event.target.result);
-                const dataArray = Array.isArray(json) ? json : (json.nft_prompts || []);
-                renderPrompts(dataArray);
+                currentData = Array.isArray(json) ? json : (json.nft_prompts || []);
+                renderPrompts();
             } catch (err) {
                 alert("সঠিক JSON ফাইল দিন।");
             }
@@ -179,11 +202,10 @@
         reader.readAsText(file);
     });
 
-    function renderPrompts(data) {
+    function renderPrompts() {
         displayArea.innerHTML = '';
-        data.forEach((item, index) => {
+        currentData.forEach((item, index) => {
             const promptText = item.prompt || "প্রম্পট পাওয়া যায়নি";
-            // এখানে index + 1 ব্যবহার করে ১ থেকে নাম্বার শুরু করা হয়েছে
             createCard(promptText, index + 1);
         });
         updateCount();
@@ -192,8 +214,7 @@
     function createCard(text, number) {
         const card = document.createElement('div');
         card.className = 'prompt-card';
-        // ইউনিক আইডি জেনারেট করা
-        const uniqueId = 'card-' + Math.random().toString(36).substr(2, 9);
+        const uniqueId = 'card-' + number;
         card.id = uniqueId;
 
         card.innerHTML = `
@@ -205,7 +226,7 @@
                 <button class="btn copy-btn" onclick="copyText(this, \`${text.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)">
                     📋 Copy
                 </button>
-                <button class="btn delete-btn" onclick="deleteCard('${uniqueId}')">
+                <button class="btn delete-btn" onclick="deleteItem(${number-1}, '${uniqueId}')">
                     🗑️ Delete
                 </button>
             </div>
@@ -225,13 +246,16 @@
         });
     }
 
-    function deleteCard(id) {
-        const element = document.getElementById(id);
+    function deleteItem(index, elementId) {
+        const element = document.getElementById(elementId);
         if (element) {
             element.style.opacity = '0';
             setTimeout(() => {
                 element.remove();
-                updateCount();
+                // ডাটা থেকে রিমুভ করা
+                currentData.splice(index, 1);
+                // ইনডেক্স ঠিক রাখার জন্য আবার রেন্ডার করা
+                renderPrompts();
             }, 200);
         }
     }
@@ -241,6 +265,21 @@
         countText.innerText = `মোট প্রম্পট: ${currentItems}`;
         if (currentItems === 0) statusBar.style.display = 'none';
     }
+
+    // Save ফাংশনালিটি
+    saveBtn.addEventListener('click', () => {
+        if (currentData.length === 0) {
+            alert("সেভ করার মতো কোনো ডাটা নেই!");
+            return;
+        }
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentData, null, 2));
+        const downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href", dataStr);
+        downloadAnchorNode.setAttribute("download", "updated_prompts.json");
+        document.body.appendChild(downloadAnchorNode);
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
+    });
 </script>
 
 </body>
