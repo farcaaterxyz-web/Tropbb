@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NFT Prompt Manager - Mobile Friendly</title>
+    <title>NFT Prompt Manager (Mobile Ready)</title>
     <style>
         :root {
             --primary: #00796b;
-            --danger: #d32f2f;
-            --bg: #f0f2f5;
+            --bg: #f0f4f4;
+            --card-bg: #ffffff;
         }
 
         body {
@@ -17,85 +17,75 @@
             margin: 0;
             padding: 15px;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
+            align-items: center;
         }
 
         .container {
             width: 100%;
-            max-width: 600px; /* মোবাইলের জন্য অপ্টিমাইজড */
-            background: white;
-            padding: 20px;
-            border-radius: 15px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            max-width: 600px; /* মোবাইলের জন্য পারফেক্ট সাইজ */
         }
 
-        h2 { 
-            text-align: center; 
-            color: var(--primary); 
-            font-size: 1.5rem;
-            margin-bottom: 20px;
-        }
+        h2 { text-align: center; color: var(--primary); font-size: 22px; }
         
-        .upload-box {
+        .upload-section {
             border: 2px dashed var(--primary);
             padding: 20px;
             text-align: center;
             border-radius: 12px;
-            cursor: pointer;
             background: #e0f2f1;
             margin-bottom: 20px;
-            font-size: 14px;
+            cursor: pointer;
         }
 
         #file-input { display: none; }
 
         .info-bar {
+            background: var(--primary);
+            color: white;
+            padding: 10px 15px;
+            border-radius: 8px;
             margin-bottom: 15px;
             font-weight: bold;
-            color: #555;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 10px;
-        }
-
-        #display-area {
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
+            font-size: 14px;
+            text-align: center;
         }
 
         .prompt-card {
-            background: #fff;
-            border: 1px solid #e0e0e0;
-            padding: 12px;
+            background: var(--card-bg);
+            padding: 15px;
+            margin-bottom: 12px;
             border-radius: 10px;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.06);
             display: flex;
-            flex-direction: column; /* মোবাইলে লেখা ও বাটন আলাদা স্তরে থাকবে */
-            gap: 10px;
+            flex-direction: column; /* মোবাইলের জন্য উপরে-নিচে লেআউট */
+            gap: 12px;
+            position: relative;
         }
 
-        .card-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .serial-no {
+        .serial-number {
             background: var(--primary);
             color: white;
-            padding: 2px 8px;
-            border-radius: 5px;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
             font-size: 12px;
             font-weight: bold;
+            margin-bottom: 5px;
         }
 
         .prompt-text {
-            font-size: 14px;
+            font-size: 15px;
             color: #333;
             line-height: 1.5;
-            word-break: break-word;
+            word-wrap: break-word;
             background: #f9f9f9;
             padding: 10px;
-            border-radius: 8px;
+            border-radius: 5px;
+            border: 1px solid #eee;
         }
 
         .actions {
@@ -105,52 +95,52 @@
         }
 
         button {
-            flex: 1; /* বাটনগুলো সমান চওড়া হবে */
-            max-width: 100px;
+            flex: 1; /* মোবাইলে বাটনগুলো সমান বড় হবে */
             padding: 10px;
             border: none;
             border-radius: 6px;
             cursor: pointer;
             font-weight: bold;
-            font-size: 13px;
+            font-size: 14px;
             transition: 0.2s;
         }
 
         .copy-btn { background: #e0f2f1; color: var(--primary); border: 1px solid var(--primary); }
         .copy-btn:active { background: var(--primary); color: white; }
         
-        .delete-btn { background: #ffebee; color: var(--danger); border: 1px solid var(--danger); }
-        .delete-btn:active { background: var(--danger); color: white; }
+        .delete-btn { background: #feebee; color: #c62828; border: 1px solid #c62828; }
+        .delete-btn:active { background: #c62828; color: white; }
 
-        /* পিসি বা বড় স্ক্রিনের জন্য বাটনগুলো ছোট থাকবে */
-        @media (min-width: 480px) {
+        /* পিসির জন্য বাটন একটু ছোট করা */
+        @media (min-width: 600px) {
             .prompt-card { flex-direction: row; align-items: flex-start; }
-            .prompt-text { flex-grow: 1; }
-            .actions { flex-direction: column; }
+            button { flex: none; width: 80px; }
+            .serial-number { margin-bottom: 0; margin-right: 10px; }
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>NFT Prompt Manager</h2>
+    <h2>Prompt Viewer Pro</h2>
 
-    <div class="upload-box" onclick="document.getElementById('file-input').click()">
-        <strong>JSON ফাইল আপলোড করুন</strong>
+    <div class="upload-section" onclick="document.getElementById('file-input').click()">
+        <strong>JSON ফাইল আপলোড করতে এখানে ট্যাপ করুন</strong>
         <input type="file" id="file-input" accept=".json">
     </div>
 
-    <div class="info-bar">
-        <span id="count">মোট প্রম্পট: 0</span>
+    <div id="status" class="info-bar" style="display: none;">
+        মোট প্রম্পট বাকি: <span id="count">0</span>
     </div>
 
-    <div id="display-area">
+    <div id="list-container">
         </div>
 </div>
 
 <script>
     const fileInput = document.getElementById('file-input');
-    const displayArea = document.getElementById('display-area');
+    const listContainer = document.getElementById('list-container');
+    const statusBox = document.getElementById('status');
     const countDisplay = document.getElementById('count');
 
     fileInput.addEventListener('change', function(e) {
@@ -162,18 +152,20 @@
             try {
                 const json = JSON.parse(event.target.result);
                 const dataArray = Array.isArray(json) ? json : (json.nft_prompts || []);
-                renderPrompts(dataArray);
+                renderAll(dataArray);
             } catch (err) {
-                alert("JSON ফাইলটি সঠিক নয়।");
+                alert("ভুল ফাইল! সঠিক JSON আপলোড করুন।");
             }
         };
         reader.readAsText(file);
     });
 
-    function renderPrompts(data) {
-        displayArea.innerHTML = '';
-        data.forEach((item, index) => {
-            const text = item.prompt || "No prompt found";
+    function renderAll(data) {
+        listContainer.innerHTML = '';
+        if (data.length > 0) statusBox.style.display = 'block';
+
+        data.forEach((item) => {
+            const text = item.prompt || "No prompt text found";
             addCard(text);
         });
         updateInterface();
@@ -184,19 +176,17 @@
         card.className = 'prompt-card';
         
         card.innerHTML = `
-            <div class="card-header">
-                <span class="serial-no">#0</span>
-            </div>
+            <div class="serial-number"></div>
             <div class="prompt-text">${text}</div>
             <div class="actions">
-                <button class="copy-btn" onclick="copyText(this, \`${text.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)">Copy</button>
-                <button class="delete-btn" onclick="deleteCard(this)">Delete</button>
+                <button class="copy-btn" onclick="copyMe(this, \`${text.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)">Copy</button>
+                <button class="delete-btn" onclick="deleteMe(this)">Delete</button>
             </div>
         `;
-        displayArea.appendChild(card);
+        listContainer.appendChild(card);
     }
 
-    function copyText(btn, text) {
+    function copyMe(btn, text) {
         navigator.clipboard.writeText(text).then(() => {
             const original = btn.innerText;
             btn.innerText = "Copied!";
@@ -210,18 +200,26 @@
         });
     }
 
-    function deleteCard(btn) {
+    function deleteMe(btn) {
         const card = btn.closest('.prompt-card');
-        card.remove();
-        updateInterface(); // ডিলিট করার পর সিরিয়াল ঠিক করবে
+        card.style.opacity = '0';
+        card.style.transform = 'scale(0.9)';
+        setTimeout(() => {
+            card.remove();
+            updateInterface();
+        }, 200);
     }
 
     function updateInterface() {
-        const cards = displayArea.querySelectorAll('.prompt-card');
+        const cards = document.querySelectorAll('.prompt-card');
+        countDisplay.innerText = cards.length;
+        
+        // স্মার্ট সিরিয়াল নম্বর আপডেট
         cards.forEach((card, index) => {
-            card.querySelector('.serial-no').innerText = `#${index + 1}`;
+            card.querySelector('.serial-number').innerText = index + 1;
         });
-        countDisplay.innerText = `মোট প্রম্পট: ${cards.length}`;
+
+        if (cards.length === 0) statusBox.style.display = 'none';
     }
 </script>
 
