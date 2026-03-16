@@ -3,86 +3,74 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JSON Prompt Manager</title>
+    <title>NFT Prompt Viewer</title>
     <style>
         body {
-            font-family: 'Segoe UI', Arial, sans-serif;
-            background-color: #f0f2f5;
+            font-family: 'Segoe UI', Tahoma, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 20px;
             display: flex;
             justify-content: center;
-            padding: 40px 20px;
-            margin: 0;
         }
         .container {
             width: 100%;
-            max-width: 900px;
+            max-width: 800px;
             background: white;
-            padding: 30px;
-            border-radius: 15px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
         }
-        h2 { text-align: center; color: #1a73e8; margin-bottom: 25px; }
+        h2 { text-align: center; color: #00796b; }
         
-        .upload-area {
-            border: 2px dashed #1a73e8;
+        .upload-box {
+            border: 2px dashed #00796b;
             padding: 30px;
             text-align: center;
             border-radius: 10px;
-            background: #f8fbff;
             cursor: pointer;
+            background: #e0f2f1;
             margin-bottom: 20px;
         }
         #file-input { display: none; }
 
-        .item-list {
-            margin-top: 20px;
-            display: grid;
-            gap: 15px;
-        }
         .prompt-card {
             background: #ffffff;
-            border: 1px solid #e0e0e0;
+            border-left: 5px solid #00796b;
             padding: 15px;
-            border-radius: 8px;
+            margin-bottom: 12px;
+            border-radius: 4px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            transition: transform 0.2s;
         }
-        .prompt-card:hover {
-            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
-            border-color: #1a73e8;
-        }
-        .text-content {
-            flex-grow: 1;
-            font-size: 15px;
+        .prompt-text {
+            font-size: 14px;
             color: #333;
-            line-height: 1.5;
-            padding-right: 20px;
-            white-space: pre-wrap; /* লাইন ব্রেক বজায় রাখবে */
+            line-height: 1.6;
+            flex-grow: 1;
+            padding-right: 15px;
         }
-        .btn-group {
+        .actions {
             display: flex;
-            gap: 8px;
-            flex-shrink: 0;
+            gap: 10px;
         }
         button {
+            padding: 8px 12px;
             border: none;
-            padding: 8px 15px;
-            border-radius: 5px;
+            border-radius: 4px;
             cursor: pointer;
-            font-weight: 600;
-            font-size: 13px;
+            font-weight: bold;
         }
-        .copy-btn { background: #e8f0fe; color: #1a73e8; }
-        .copy-btn:hover { background: #1a73e8; color: white; }
-        .delete-btn { background: #fee8e8; color: #d93025; }
-        .delete-btn:hover { background: #d93025; color: white; }
+        .copy-btn { background: #00796b; color: white; }
+        .delete-btn { background: #e53935; color: white; }
+        .copy-btn:hover { background: #004d40; }
         
-        .status-bar {
-            font-size: 14px;
-            color: #666;
-            margin-bottom: 10px;
+        .info-bar {
+            margin-bottom: 15px;
+            font-weight: bold;
+            color: #555;
             display: flex;
             justify-content: space-between;
         }
@@ -91,96 +79,90 @@
 <body>
 
 <div class="container">
-    <h2>JSON Prompt Viewer</h2>
+    <h2>NFT Prompt Manager</h2>
 
-    <div class="upload-area" onclick="document.getElementById('file-input').click()">
-        <strong>JSON ফাইল এখানে ক্লিক করে আপলোড করুন</strong>
+    <div class="upload-box" onclick="document.getElementById('file-input').click()">
+        <strong>এখানে ক্লিক করে আপনার JSON ফাইলটি আপলোড করুন</strong>
         <input type="file" id="file-input" accept=".json">
     </div>
 
-    <div class="status-bar">
-        <span id="counter">মোট প্রম্পট: 0</span>
-        <span id="file-info"></span>
+    <div class="info-bar">
+        <span id="count">মোট প্রম্পট: 0</span>
     </div>
 
-    <div id="item-list" class="item-list">
+    <div id="display-area">
         </div>
 </div>
 
 <script>
     const fileInput = document.getElementById('file-input');
-    const itemList = document.getElementById('item-list');
-    const counter = document.getElementById('counter');
+    const displayArea = document.getElementById('display-area');
+    const countDisplay = document.getElementById('count');
 
     fileInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
 
-        document.getElementById('file-info').innerText = `ফাইল: ${file.name}`;
         const reader = new FileReader();
-
         reader.onload = function(event) {
             try {
-                const data = JSON.parse(event.target.result);
-                processJSON(data);
+                const json = JSON.parse(event.target.result);
+                
+                // আপনার স্ক্রিনশট অনুযায়ী 'nft_prompts' কি বা সরাসরি অ্যারে চেক করা
+                const dataArray = Array.isArray(json) ? json : json.nft_prompts;
+                
+                if (dataArray) {
+                    renderPrompts(dataArray);
+                } else {
+                    alert("সঠিক ফরম্যাটে ডাটা খুঁজে পাওয়া যায়নি!");
+                }
             } catch (err) {
-                alert("ভুল JSON ফরম্যাট! সঠিক ফাইল দিন।");
+                alert("JSON ফাইলটি পড়তে সমস্যা হচ্ছে।");
             }
         };
         reader.readAsText(file);
     });
 
-    function processJSON(data) {
-        itemList.innerHTML = '';
-        let entries = [];
-
-        // যদি JSON একটি Array হয় (যেমন: ["prompt1", "prompt2"])
-        if (Array.isArray(data)) {
-            entries = data;
-        } 
-        // যদি JSON একটি Object হয় (যেমন: {"1": "p1", "2": "p2"})
-        else if (typeof data === 'object') {
-            entries = Object.values(data);
-        }
-
-        entries.forEach((text, index) => {
-            const finalTxt = typeof text === 'object' ? JSON.stringify(text) : text;
-            addPromptRow(finalTxt, index);
+    function renderPrompts(data) {
+        displayArea.innerHTML = '';
+        data.forEach((item, index) => {
+            // শুধুমাত্র 'prompt' ফিল্ডটি নেওয়া হচ্ছে
+            const promptText = item.prompt || "No prompt found";
+            createCard(promptText, index);
         });
-
         updateCount();
     }
 
-    function addPromptRow(content, id) {
-        const div = document.createElement('div');
-        div.className = 'prompt-card';
-        div.id = `row-${id}`;
+    function createCard(text, id) {
+        const card = document.createElement('div');
+        card.className = 'prompt-card';
+        card.id = `card-${id}`;
 
-        div.innerHTML = `
-            <div class="text-content">${content}</div>
-            <div class="btn-group">
-                <button class="copy-btn" onclick="copyPrompt(this, \`${content.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)">Copy</button>
-                <button class="delete-btn" onclick="deleteRow('row-${id}')">Delete</button>
+        card.innerHTML = `
+            <div class="prompt-text">${text}</div>
+            <div class="actions">
+                <button class="copy-btn" onclick="copyText(this, \`${text.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)">Copy</button>
+                <button class="delete-btn" onclick="deleteCard('card-${id}')">Delete</button>
             </div>
         `;
-        itemList.appendChild(div);
+        displayArea.appendChild(card);
     }
 
-    function copyPrompt(btn, text) {
+    function copyText(btn, text) {
         navigator.clipboard.writeText(text).then(() => {
-            const oldText = btn.innerText;
+            const originalText = btn.innerText;
             btn.innerText = "Copied!";
-            setTimeout(() => btn.innerText = oldText, 1000);
+            setTimeout(() => btn.innerText = originalText, 1000);
         });
     }
 
-    function deleteRow(id) {
+    function deleteCard(id) {
         document.getElementById(id).remove();
         updateCount();
     }
 
     function updateCount() {
-        counter.innerText = `মোট প্রম্পট: ${itemList.children.length}`;
+        countDisplay.innerText = `মোট প্রম্পট: ${displayArea.children.length}`;
     }
 </script>
 
