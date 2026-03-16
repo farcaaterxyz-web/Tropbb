@@ -1,98 +1,193 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lutra 1111 Prompt Splitter</title>
+    <title>JSON Viewer & Manager</title>
     <style>
-        body { font-family: 'Segoe UI', sans-serif; background: #0b0f19; color: #f1f5f9; margin: 0; padding: 20px; }
-        .container { max-width: 900px; margin: auto; }
-        .header { text-align: center; margin-bottom: 30px; background: #161b22; padding: 20px; border-radius: 15px; border: 1px solid #30363d; }
-        h1 { color: #58a6ff; margin: 0; font-size: 24px; }
-        .upload-section { background: #161b22; padding: 30px; border-radius: 15px; text-align: center; border: 2px dashed #30363d; margin-bottom: 20px; transition: 0.3s; }
-        .upload-section:hover { border-color: #58a6ff; }
-        input[type="file"] { background: #21262d; padding: 10px; border-radius: 5px; color: white; cursor: pointer; }
-        #promptList { display: flex; flex-direction: column; gap: 15px; }
-        .prompt-card { background: #161b22; padding: 20px; border-radius: 12px; border: 1px solid #30363d; line-height: 1.6; position: relative; }
-        .serial-tag { display: inline-block; background: #238636; color: white; padding: 2px 10px; border-radius: 20px; font-size: 12px; margin-bottom: 10px; font-weight: bold; }
-        .prompt-content { font-size: 15px; color: #c9d1d9; white-space: pre-wrap; margin-bottom: 15px; }
-        .actions { display: flex; gap: 10px; }
-        button { border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; }
-        .copy-btn { background: #1f6feb; color: white; }
-        .copy-btn:hover { background: #388bfd; }
-        .delete-btn { background: #da3633; color: white; }
-        .delete-btn:hover { background: #f85149; }
-        .stats { margin-bottom: 15px; font-size: 14px; color: #8b949e; }
+        :root {
+            --primary-color: #4a90e2;
+            --bg-color: #f4f7f9;
+            --card-bg: #ffffff;
+            --text-color: #333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+        }
+
+        h2 { text-align: center; color: var(--primary-color); }
+
+        .upload-section {
+            border: 2px dashed var(--primary-color);
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            transition: 0.3s;
+        }
+
+        .upload-section:hover { background: #eef5ff; }
+
+        input[type="file"] { display: none; }
+
+        .custom-file-upload {
+            background: var(--primary-color);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            display: inline-block;
+        }
+
+        #item-container {
+            margin-top: 20px;
+        }
+
+        .json-card {
+            background: #fafafa;
+            border: 1px solid #ddd;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            word-break: break-all;
+        }
+
+        .json-content {
+            flex-grow: 1;
+            font-family: monospace;
+            font-size: 14px;
+            margin-right: 15px;
+        }
+
+        .actions button {
+            border: none;
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            margin-left: 5px;
+        }
+
+        .copy-btn { background: #28a745; color: white; }
+        .delete-btn { background: #dc3545; color: white; }
+        .copy-btn:hover { background: #218838; }
+        .delete-btn:hover { background: #c82333; }
+
+        .stats { margin-top: 10px; font-weight: bold; color: #666; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <div class="header">
-        <h1>Lutra 1111 Prompt Manager</h1>
-        <p>আপনার ফাইলটি আপলোড করুন, এটি নিখুঁতভাবে ১-১১১১টি প্রম্পট আলাদা করে দেবে।</p>
-    </div>
-
+    <h2>JSON Viewer & Manager</h2>
+    
     <div class="upload-section">
-        <input type="file" id="fileInput" accept=".txt">
-        <p>Select your <strong>lutra_1111_prompts.txt</strong> file</p>
+        <label for="file-upload" class="custom-file-upload">
+            JSON ফাইল আপলোড করুন
+        </label>
+        <input id="file-upload" type="file" accept=".json"/>
+        <p id="file-name" style="margin-top: 10px;">কোনো ফাইল সিলেক্ট করা হয়নি</p>
     </div>
 
-    <div id="stats" class="stats"></div>
-    <div id="promptList"></div>
+    <div class="stats" id="stats-info">মোট আইটেম: 0</div>
+
+    <div id="item-container">
+        </div>
 </div>
 
 <script>
-    const fileInput = document.getElementById('fileInput');
-    const promptList = document.getElementById('promptList');
-    const statsDiv = document.getElementById('stats');
+    const fileUpload = document.getElementById('file-upload');
+    const fileNameDisplay = document.getElementById('file-name');
+    const itemContainer = document.getElementById('item-container');
+    const statsInfo = document.getElementById('stats-info');
 
-    fileInput.addEventListener('change', function(e) {
+    fileUpload.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
 
+        fileNameDisplay.textContent = `ফাইল: ${file.name}`;
         const reader = new FileReader();
-        reader.onload = function(e) {
-            const content = e.target.result;
-            
-            // এই Regex কোডটি "Hand-drawn mobile art" লেখাটি যেখানেই পাবে সেখান থেকে টেক্সট কেটে আলাদা করবে।
-            // এতে ৩-৪টি প্রম্পট একসাথে লেগে থাকার আর কোনো সুযোগ থাকবে না।
-            const rawPrompts = content.split(/(?=Hand-drawn mobile art)/g);
-            const cleanPrompts = rawPrompts.map(p => p.trim()).filter(p => p.length > 20);
-            
-            statsDiv.innerHTML = `Total Prompts Found: <strong>${cleanPrompts.length}</strong>`;
-            renderPrompts(cleanPrompts);
+
+        reader.onload = function(event) {
+            try {
+                const jsonData = JSON.parse(event.target.result);
+                displayJSON(jsonData);
+            } catch (error) {
+                alert("ভুল JSON ফাইল! অনুগ্রহ করে সঠিক ফাইল আপলোড করুন।");
+            }
         };
         reader.readAsText(file);
     });
 
-    function renderPrompts(prompts) {
-        promptList.innerHTML = "";
-        prompts.forEach((text, index) => {
-            const card = document.createElement('div');
-            card.className = 'prompt-card';
-            card.innerHTML = `
-                <div class="serial-tag">Serial: #${index + 1}</div>
-                <div class="prompt-content">${text}</div>
-                <div class="actions">
-                    <button class="copy-btn" onclick="copyPrompt(this, \`${text.replace(/`/g, '\\`').replace(/\n/g, ' ')}\`)">Copy Prompt</button>
-                    <button class="delete-btn" onclick="this.closest('.prompt-card').remove()">Delete</button>
-                </div>
-            `;
-            promptList.appendChild(card);
+    function displayJSON(data) {
+        itemContainer.innerHTML = '';
+        const items = Array.isArray(data) ? data : [data];
+
+        items.forEach((item, index) => {
+            const itemString = typeof item === 'object' ? JSON.stringify(item, null, 2) : item;
+            createCard(itemString, index);
         });
+        updateStats();
     }
 
-    function copyPrompt(btn, text) {
+    function createCard(content, id) {
+        const card = document.createElement('div');
+        card.className = 'json-card';
+        card.id = `card-${id}`;
+
+        card.innerHTML = `
+            <div class="json-content">${content}</div>
+            <div class="actions">
+                <button class="copy-btn" onclick="copyText(this, \`${content.replace(/`/g, '\\`').replace(/\${/g, '\\${')}\`)">Copy</button>
+                <button class="delete-btn" onclick="deleteCard('card-${id}')">Delete</button>
+            </div>
+        `;
+        itemContainer.appendChild(card);
+    }
+
+    function copyText(btn, text) {
         navigator.clipboard.writeText(text).then(() => {
             const originalText = btn.innerText;
             btn.innerText = "Copied!";
-            btn.style.background = "#238636";
+            btn.style.background = "#0056b3";
             setTimeout(() => {
                 btn.innerText = originalText;
-                btn.style.background = "#1f6feb";
-            }, 1000);
+                btn.style.background = "#28a745";
+            }, 1500);
         });
+    }
+
+    function deleteCard(id) {
+        const card = document.getElementById(id);
+        if (card) {
+            card.remove();
+            updateStats();
+        }
+    }
+
+    function updateStats() {
+        const count = itemContainer.children.length;
+        statsInfo.textContent = `মোট আইটেম: ${count}`;
     }
 </script>
 
