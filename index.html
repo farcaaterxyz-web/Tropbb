@@ -8,9 +8,9 @@
         :root {
             --primary: #00796b;
             --danger: #e53935;
+            --save: #1976d2;
             --bg: #f0f4f4;
             --white: #ffffff;
-            --save: #1a73e8;
         }
 
         body {
@@ -29,22 +29,23 @@
             position: relative;
         }
 
-        /* Save বাটন পজিশনিং */
-        .save-wrapper {
-            position: absolute;
-            top: 0;
-            right: 0;
-        }
-
-        .save-btn-top {
+        /* Save Button - Top Right */
+        .save-header-btn {
+            position: fixed;
+            top: 15px;
+            right: 15px;
+            z-index: 1000;
             background: var(--save);
             color: white;
             border: none;
-            padding: 8px 15px;
-            border-radius: 8px;
+            padding: 10px 18px;
+            border-radius: 30px;
             font-weight: bold;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
             cursor: pointer;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: flex;
+            align-items: center;
+            gap: 5px;
         }
 
         h2 {
@@ -85,7 +86,6 @@
             border-radius: 12px;
             padding: 15px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            position: relative;
             display: flex;
             flex-direction: column;
             gap: 12px;
@@ -124,7 +124,7 @@
         .btn {
             flex: 1;
             border: none;
-            padding: 10px;
+            padding: 12px;
             border-radius: 8px;
             font-weight: bold;
             cursor: pointer;
@@ -139,28 +139,26 @@
         .copy-btn { background: var(--primary); color: white; }
         .delete-btn { background: #ffebee; color: var(--danger); }
 
-        .btn:active { transform: scale(0.95); }
+        .save-header-btn:active, .btn:active { transform: scale(0.95); }
 
         @media (max-width: 480px) {
-            body { padding: 5px; }
-            .prompt-card { padding: 12px; }
-            h2 { font-size: 1.2rem; }
-            .save-btn-top { padding: 6px 10px; font-size: 12px; }
+            .save-header-btn { padding: 8px 14px; font-size: 13px; top: 10px; right: 10px; }
+            h2 { font-size: 1.2rem; margin-top: 40px; }
         }
     </style>
 </head>
 <body>
 
+<button class="save-header-btn" onclick="saveCurrentWork()">
+    💾 Save Work
+</button>
+
 <div class="container">
-    <div class="save-wrapper">
-        <button id="save-json" class="save-btn-top">💾 Save</button>
-    </div>
-    
     <h2>NFT Prompt Manager</h2>
 
     <div class="upload-card" onclick="document.getElementById('file-input').click()">
         <div style="font-size: 24px;">📁</div>
-        <strong style="color: var(--primary);">JSON ফাইল আপলোড করুন</strong>
+        <strong style="color: var(--primary);">নতুন JSON ফাইল আপলোড করুন</strong>
         <input type="file" id="file-input" accept=".json">
     </div>
 
@@ -178,9 +176,17 @@
     const statusBar = document.getElementById('status-bar');
     const countText = document.getElementById('count-text');
     const fileNameText = document.getElementById('file-name-text');
-    const saveBtn = document.getElementById('save-json');
 
-    let currentData = [];
+    // পেজ লোড হওয়ার সাথে সাথে সেভ করা ডাটা চেক করবে
+    window.onload = function() {
+        const savedData = localStorage.getItem('nft_saved_work');
+        if (savedData) {
+            const parsedData = JSON.parse(savedData);
+            fileNameText.innerText = "Saved Progress";
+            statusBar.style.display = 'flex';
+            renderPromptsFromStorage(parsedData);
+        }
+    };
 
     fileInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
@@ -193,8 +199,8 @@
         reader.onload = function(event) {
             try {
                 const json = JSON.parse(event.target.result);
-                currentData = Array.isArray(json) ? json : (json.nft_prompts || []);
-                renderPrompts();
+                const dataArray = Array.isArray(json) ? json : (json.nft_prompts || []);
+                renderPrompts(dataArray);
             } catch (err) {
                 alert("সঠিক JSON ফাইল দিন।");
             }
@@ -202,11 +208,19 @@
         reader.readAsText(file);
     });
 
-    function renderPrompts() {
+    function renderPrompts(data) {
         displayArea.innerHTML = '';
-        currentData.forEach((item, index) => {
+        data.forEach((item, index) => {
             const promptText = item.prompt || "প্রম্পট পাওয়া যায়নি";
             createCard(promptText, index + 1);
+        });
+        updateCount();
+    }
+
+    function renderPromptsFromStorage(data) {
+        displayArea.innerHTML = '';
+        data.forEach((item) => {
+            createCard(item.text, item.number);
         });
         updateCount();
     }
@@ -214,7 +228,7 @@
     function createCard(text, number) {
         const card = document.createElement('div');
         card.className = 'prompt-card';
-        const uniqueId = 'card-' + number;
+        const uniqueId = 'card-' + Math.random().toString(36).substr(2, 9);
         card.id = uniqueId;
 
         card.innerHTML = `
@@ -226,7 +240,7 @@
                 <button class="btn copy-btn" onclick="copyText(this, \`${text.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)">
                     📋 Copy
                 </button>
-                <button class="btn delete-btn" onclick="deleteItem(${number-1}, '${uniqueId}')">
+                <button class="btn delete-btn" onclick="deleteCard('${uniqueId}')">
                     🗑️ Delete
                 </button>
             </div>
@@ -246,40 +260,44 @@
         });
     }
 
-    function deleteItem(index, elementId) {
-        const element = document.getElementById(elementId);
+    function deleteCard(id) {
+        const element = document.getElementById(id);
         if (element) {
-            element.style.opacity = '0';
-            setTimeout(() => {
-                element.remove();
-                // ডাটা থেকে রিমুভ করা
-                currentData.splice(index, 1);
-                // ইনডেক্স ঠিক রাখার জন্য আবার রেন্ডার করা
-                renderPrompts();
-            }, 200);
+            element.remove();
+            updateCount();
         }
     }
 
     function updateCount() {
         const currentItems = displayArea.children.length;
         countText.innerText = `মোট প্রম্পট: ${currentItems}`;
-        if (currentItems === 0) statusBar.style.display = 'none';
+        if (currentItems === 0 && !localStorage.getItem('nft_saved_work')) {
+            statusBar.style.display = 'none';
+        }
     }
 
-    // Save ফাংশনালিটি
-    saveBtn.addEventListener('click', () => {
-        if (currentData.length === 0) {
-            alert("সেভ করার মতো কোনো ডাটা নেই!");
-            return;
-        }
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(currentData, null, 2));
-        const downloadAnchorNode = document.createElement('a');
-        downloadAnchorNode.setAttribute("href", dataStr);
-        downloadAnchorNode.setAttribute("download", "updated_prompts.json");
-        document.body.appendChild(downloadAnchorNode);
-        downloadAnchorNode.click();
-        downloadAnchorNode.remove();
-    });
+    // কাজের অগ্রগতি সেভ করার ফাংশন
+    function saveCurrentWork() {
+        const cards = document.querySelectorAll('.prompt-card');
+        const dataToSave = [];
+
+        cards.forEach(card => {
+            const number = card.querySelector('.line-number').innerText.replace('আইটেম #', '');
+            const text = card.querySelector('.prompt-text').innerText;
+            dataToSave.push({ number, text });
+        });
+
+        localStorage.setItem('nft_saved_work', JSON.stringify(dataToSave));
+        
+        const saveBtn = document.querySelector('.save-header-btn');
+        saveBtn.innerText = "✅ Saved!";
+        saveBtn.style.background = "#2e7d32";
+        
+        setTimeout(() => {
+            saveBtn.innerHTML = "💾 Save Work";
+            saveBtn.style.background = "#1976d2";
+        }, 2000);
+    }
 </script>
 
 </body>
