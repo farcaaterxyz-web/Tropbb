@@ -3,191 +3,184 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JSON Viewer & Manager</title>
+    <title>JSON Prompt Manager</title>
     <style>
-        :root {
-            --primary-color: #4a90e2;
-            --bg-color: #f4f7f9;
-            --card-bg: #ffffff;
-            --text-color: #333;
-        }
-
         body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            margin: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background-color: #f0f2f5;
             display: flex;
-            flex-direction: column;
-            align-items: center;
-            padding: 20px;
+            justify-content: center;
+            padding: 40px 20px;
+            margin: 0;
         }
-
         .container {
             width: 100%;
-            max-width: 800px;
-            background: var(--card-bg);
+            max-width: 900px;
+            background: white;
             padding: 30px;
-            border-radius: 12px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
         }
-
-        h2 { text-align: center; color: var(--primary-color); }
-
-        .upload-section {
-            border: 2px dashed var(--primary-color);
-            padding: 20px;
+        h2 { text-align: center; color: #1a73e8; margin-bottom: 25px; }
+        
+        .upload-area {
+            border: 2px dashed #1a73e8;
+            padding: 30px;
             text-align: center;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            transition: 0.3s;
-        }
-
-        .upload-section:hover { background: #eef5ff; }
-
-        input[type="file"] { display: none; }
-
-        .custom-file-upload {
-            background: var(--primary-color);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 5px;
+            border-radius: 10px;
+            background: #f8fbff;
             cursor: pointer;
-            display: inline-block;
+            margin-bottom: 20px;
         }
+        #file-input { display: none; }
 
-        #item-container {
+        .item-list {
             margin-top: 20px;
+            display: grid;
+            gap: 15px;
         }
-
-        .json-card {
-            background: #fafafa;
-            border: 1px solid #ddd;
+        .prompt-card {
+            background: #ffffff;
+            border: 1px solid #e0e0e0;
             padding: 15px;
-            margin-bottom: 10px;
-            border-radius: 6px;
+            border-radius: 8px;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            word-break: break-all;
+            transition: transform 0.2s;
         }
-
-        .json-content {
+        .prompt-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            border-color: #1a73e8;
+        }
+        .text-content {
             flex-grow: 1;
-            font-family: monospace;
-            font-size: 14px;
-            margin-right: 15px;
+            font-size: 15px;
+            color: #333;
+            line-height: 1.5;
+            padding-right: 20px;
+            white-space: pre-wrap; /* লাইন ব্রেক বজায় রাখবে */
         }
-
-        .actions button {
+        .btn-group {
+            display: flex;
+            gap: 8px;
+            flex-shrink: 0;
+        }
+        button {
             border: none;
-            padding: 6px 12px;
-            border-radius: 4px;
+            padding: 8px 15px;
+            border-radius: 5px;
             cursor: pointer;
-            font-weight: bold;
-            margin-left: 5px;
+            font-weight: 600;
+            font-size: 13px;
         }
-
-        .copy-btn { background: #28a745; color: white; }
-        .delete-btn { background: #dc3545; color: white; }
-        .copy-btn:hover { background: #218838; }
-        .delete-btn:hover { background: #c82333; }
-
-        .stats { margin-top: 10px; font-weight: bold; color: #666; }
+        .copy-btn { background: #e8f0fe; color: #1a73e8; }
+        .copy-btn:hover { background: #1a73e8; color: white; }
+        .delete-btn { background: #fee8e8; color: #d93025; }
+        .delete-btn:hover { background: #d93025; color: white; }
+        
+        .status-bar {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+        }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>JSON Viewer & Manager</h2>
-    
-    <div class="upload-section">
-        <label for="file-upload" class="custom-file-upload">
-            JSON ফাইল আপলোড করুন
-        </label>
-        <input id="file-upload" type="file" accept=".json"/>
-        <p id="file-name" style="margin-top: 10px;">কোনো ফাইল সিলেক্ট করা হয়নি</p>
+    <h2>JSON Prompt Viewer</h2>
+
+    <div class="upload-area" onclick="document.getElementById('file-input').click()">
+        <strong>JSON ফাইল এখানে ক্লিক করে আপলোড করুন</strong>
+        <input type="file" id="file-input" accept=".json">
     </div>
 
-    <div class="stats" id="stats-info">মোট আইটেম: 0</div>
+    <div class="status-bar">
+        <span id="counter">মোট প্রম্পট: 0</span>
+        <span id="file-info"></span>
+    </div>
 
-    <div id="item-container">
+    <div id="item-list" class="item-list">
         </div>
 </div>
 
 <script>
-    const fileUpload = document.getElementById('file-upload');
-    const fileNameDisplay = document.getElementById('file-name');
-    const itemContainer = document.getElementById('item-container');
-    const statsInfo = document.getElementById('stats-info');
+    const fileInput = document.getElementById('file-input');
+    const itemList = document.getElementById('item-list');
+    const counter = document.getElementById('counter');
 
-    fileUpload.addEventListener('change', function(e) {
+    fileInput.addEventListener('change', function(e) {
         const file = e.target.files[0];
         if (!file) return;
 
-        fileNameDisplay.textContent = `ফাইল: ${file.name}`;
+        document.getElementById('file-info').innerText = `ফাইল: ${file.name}`;
         const reader = new FileReader();
 
         reader.onload = function(event) {
             try {
-                const jsonData = JSON.parse(event.target.result);
-                displayJSON(jsonData);
-            } catch (error) {
-                alert("ভুল JSON ফাইল! অনুগ্রহ করে সঠিক ফাইল আপলোড করুন।");
+                const data = JSON.parse(event.target.result);
+                processJSON(data);
+            } catch (err) {
+                alert("ভুল JSON ফরম্যাট! সঠিক ফাইল দিন।");
             }
         };
         reader.readAsText(file);
     });
 
-    function displayJSON(data) {
-        itemContainer.innerHTML = '';
-        const items = Array.isArray(data) ? data : [data];
+    function processJSON(data) {
+        itemList.innerHTML = '';
+        let entries = [];
 
-        items.forEach((item, index) => {
-            const itemString = typeof item === 'object' ? JSON.stringify(item, null, 2) : item;
-            createCard(itemString, index);
+        // যদি JSON একটি Array হয় (যেমন: ["prompt1", "prompt2"])
+        if (Array.isArray(data)) {
+            entries = data;
+        } 
+        // যদি JSON একটি Object হয় (যেমন: {"1": "p1", "2": "p2"})
+        else if (typeof data === 'object') {
+            entries = Object.values(data);
+        }
+
+        entries.forEach((text, index) => {
+            const finalTxt = typeof text === 'object' ? JSON.stringify(text) : text;
+            addPromptRow(finalTxt, index);
         });
-        updateStats();
+
+        updateCount();
     }
 
-    function createCard(content, id) {
-        const card = document.createElement('div');
-        card.className = 'json-card';
-        card.id = `card-${id}`;
+    function addPromptRow(content, id) {
+        const div = document.createElement('div');
+        div.className = 'prompt-card';
+        div.id = `row-${id}`;
 
-        card.innerHTML = `
-            <div class="json-content">${content}</div>
-            <div class="actions">
-                <button class="copy-btn" onclick="copyText(this, \`${content.replace(/`/g, '\\`').replace(/\${/g, '\\${')}\`)">Copy</button>
-                <button class="delete-btn" onclick="deleteCard('card-${id}')">Delete</button>
+        div.innerHTML = `
+            <div class="text-content">${content}</div>
+            <div class="btn-group">
+                <button class="copy-btn" onclick="copyPrompt(this, \`${content.replace(/`/g, '\\`').replace(/\$/g, '\\$')}\`)">Copy</button>
+                <button class="delete-btn" onclick="deleteRow('row-${id}')">Delete</button>
             </div>
         `;
-        itemContainer.appendChild(card);
+        itemList.appendChild(div);
     }
 
-    function copyText(btn, text) {
+    function copyPrompt(btn, text) {
         navigator.clipboard.writeText(text).then(() => {
-            const originalText = btn.innerText;
+            const oldText = btn.innerText;
             btn.innerText = "Copied!";
-            btn.style.background = "#0056b3";
-            setTimeout(() => {
-                btn.innerText = originalText;
-                btn.style.background = "#28a745";
-            }, 1500);
+            setTimeout(() => btn.innerText = oldText, 1000);
         });
     }
 
-    function deleteCard(id) {
-        const card = document.getElementById(id);
-        if (card) {
-            card.remove();
-            updateStats();
-        }
+    function deleteRow(id) {
+        document.getElementById(id).remove();
+        updateCount();
     }
 
-    function updateStats() {
-        const count = itemContainer.children.length;
-        statsInfo.textContent = `মোট আইটেম: ${count}`;
+    function updateCount() {
+        counter.innerText = `মোট প্রম্পট: ${itemList.children.length}`;
     }
 </script>
 
